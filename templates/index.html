@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+    <title>Image Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { margin-bottom: 20px; }
+        .image-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .image-grid img { max-width: 200px; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Image Search</h1>
+    <form method="get" action="/">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search description" size="40"/>
+        <button type="submit">Search</button>
+    </form>
+    {% if results %}
+    <div>Found {{ results|length }} results</div>
+    <div class="image-grid">
+        {% for r in results %}
+            <div>
+                <img src="/images/{{ r.filepath }}" alt="result" />
+                <div>{{ '%.3f'|format(r.score) }}</div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</body>
+</html>

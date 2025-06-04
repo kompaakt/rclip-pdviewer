@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .search-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+
+      .search-btn {
+        background: #007bff;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .search-btn:hover {
+        background: #0056b3;
+      }
+
+      .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .image-card {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+      }
+
+      .image-card:hover {
+        transform: translateY(-2px);
+      }
+
+      .image-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        cursor: pointer;
+      }
+
+      .image-info {
+        padding: 12px;
+      }
+
+      .image-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+
+      .image-score {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+
+      .view-full-btn {
+        background: #28a745;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 8px;
+        width: 100%;
+      }
+
+      .view-full-btn:hover {
+        background: #1e7e34;
+      }
+
+      .view-similar-btn {
+        background: #17a2b8;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 8px;
+        width: 100%;
+      }
+
+      .view-similar-btn:hover {
+        background: #138496;
+      }
+
+      .tabs {
+        display: flex;
+        background: white;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .tab {
+        padding: 12px 24px;
+        cursor: pointer;
+        border: none;
+        background: #f8f9fa;
+        color: #666;
+        font-size: 16px;
+        transition: all 0.2s;
+        flex: 1;
+        text-align: center;
+      }
+
+      .tab:first-child {
+        border-radius: 8px 0 0 0;
+      }
+
+      .tab:last-child {
+        border-radius: 0 8px 0 0;
+      }
+
+      .tab.active {
+        background: #007bff;
+        color: white;
+      }
+
+      .tab:hover:not(.active) {
+        background: #e9ecef;
+      }
+
+      .favorite-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #ddd;
+        transition: color 0.2s;
+        margin-right: 8px;
+        padding: 4px;
+      }
+
+      .favorite-btn:hover {
+        color: #ffc107;
+      }
+
+      .favorite-btn.favorited {
+        color: #ffc107;
+      }
+
+      .image-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+
+      .image-buttons {
+        margin-top: 8px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+      }
+
+      .modal-content {
+        position: relative;
+        margin: auto;
+        padding: 0;
+        width: 90%;
+        max-width: 1200px;
+        height: 90%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: #bbb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="tabs">
+        <button class="tab active" id="allTab" onclick="switchTab('all')">
+          All Images
+        </button>
+        <button class="tab" id="favoritesTab" onclick="switchTab('favorites')">
+          Favorites
+        </button>
+      </div>
+
+      <div class="search-section" id="searchSection">
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search images by description (e.g., 'cat sitting on a chair', 'red car', 'sunset over mountains')"
+        />
+        <button id="searchBtn" class="search-btn">Search Images</button>
+        <button
+          id="showAllBtn"
+          class="search-btn"
+          style="background: #28a745; margin-left: 10px"
+        >
+          Show All Images
+        </button>
+      </div>
+
+      <div id="errorMessage"></div>
+      <div id="loadingMessage" class="loading" style="display: none">
+        Loading...
+      </div>
+      <div id="imagesGrid" class="images-grid"></div>
+    </div>
+
+    <!-- Modal for full image view -->
+    <div id="imageModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <img id="modalImage" src="" alt="" />
+      </div>
+    </div>
+
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      const searchBtn = document.getElementById("searchBtn");
+      const showAllBtn = document.getElementById("showAllBtn");
+      const imagesGrid = document.getElementById("imagesGrid");
+      const loadingMessage = document.getElementById("loadingMessage");
+      const errorMessage = document.getElementById("errorMessage");
+      const modal = document.getElementById("imageModal");
+      const modalImage = document.getElementById("modalImage");
+      const closeModal = document.getElementsByClassName("close")[0];
+      const allTab = document.getElementById("allTab");
+      const favoritesTab = document.getElementById("favoritesTab");
+      const searchSection = document.getElementById("searchSection");
+
+      let currentTab = "all";
+      let allImages = [];
+
+      // Favorites management
+      function getFavorites() {
+        const favorites = localStorage.getItem("imageFavorites");
+        return favorites ? JSON.parse(favorites) : [];
+      }
+
+      function saveFavorites(favorites) {
+        localStorage.setItem("imageFavorites", JSON.stringify(favorites));
+      }
+
+      function isFavorite(filename) {
+        return getFavorites().includes(filename);
+      }
+
+      function addToFavorites(filename) {
+        const favorites = getFavorites();
+        if (!favorites.includes(filename)) {
+          favorites.push(filename);
+          saveFavorites(favorites);
+        }
+      }
+
+      function removeFromFavorites(filename) {
+        const favorites = getFavorites();
+        const index = favorites.indexOf(filename);
+        if (index > -1) {
+          favorites.splice(index, 1);
+          saveFavorites(favorites);
+        }
+      }
+
+      function toggleFavorite(filename) {
+        if (isFavorite(filename)) {
+          removeFromFavorites(filename);
+        } else {
+          addToFavorites(filename);
+        }
+
+        // Update the display if we're in favorites tab
+        if (currentTab === "favorites") {
+          showFavorites();
+        } else {
+          // Update the favorite button appearance
+          updateFavoriteButton(filename);
+        }
+      }
+
+      function updateFavoriteButton(filename) {
+        const buttons = document.querySelectorAll(
+          `[data-filename="${filename}"]`
+        );
+        buttons.forEach((button) => {
+          if (isFavorite(filename)) {
+            button.classList.add("favorited");
+            button.innerHTML = "★";
+          } else {
+            button.classList.remove("favorited");
+            button.innerHTML = "☆";
+          }
+        });
+      }
+
+      function switchTab(tab) {
+        currentTab = tab;
+
+        // Update tab appearance
+        allTab.classList.toggle("active", tab === "all");
+        favoritesTab.classList.toggle("active", tab === "favorites");
+
+        // Show/hide search section
+        searchSection.style.display = tab === "all" ? "block" : "none";
+
+        if (tab === "all") {
+          // Show all images or current search results
+          if (allImages.length > 0) {
+            displayImages(allImages);
+          } else {
+            loadAllImages();
+          }
+        } else {
+          showFavorites();
+        }
+      }
+
+      function showFavorites() {
+        const favorites = getFavorites();
+        if (favorites.length === 0) {
+          hideLoading();
+          imagesGrid.innerHTML =
+            '<div style="text-align: center; color: #666; padding: 40px;">No favorite images yet. Click the star on any image to add it to favorites!</div>';
+          return;
+        }
+
+        // Filter allImages to show only favorites
+        const favoriteImages = allImages.filter((image) =>
+          favorites.includes(image.filename)
+        );
+        displayImages(favoriteImages);
+      }
+
+      function showLoading() {
+        loadingMessage.style.display = "block";
+        imagesGrid.innerHTML = "";
+        errorMessage.innerHTML = "";
+      }
+
+      function hideLoading() {
+        loadingMessage.style.display = "none";
+      }
+
+      function showError(message) {
+        errorMessage.innerHTML = `<div class="error">${message}</div>`;
+      }
+
+      function openModal(imageSrc, imageAlt) {
+        modal.style.display = "block";
+        modalImage.src = imageSrc;
+        modalImage.alt = imageAlt;
+      }
+
+      function closeModalFunc() {
+        modal.style.display = "none";
+      }
+
+      async function searchSimilarImages(filename) {
+        showLoading();
+
+        try {
+          const response = await fetch("/api/similar", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ filename: filename }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Create a query image object to display at the top
+          const queryImage = { filename: filename, isQueryImage: true };
+          const allResults = [queryImage, ...(data.images || [])];
+
+          displayImages(allResults);
+
+          // Clear the search input
+          searchInput.value = "";
+        } catch (error) {
+          hideLoading();
+          showError(`Similar image search failed: ${error.message}`);
+        }
+      }
+
+      function displayImages(images) {
+        hideLoading();
+        imagesGrid.innerHTML = "";
+
+        if (images.length === 0) {
+          imagesGrid.innerHTML =
+            '<div style="text-align: center; color: #666; padding: 40px;">No images found</div>';
+          return;
+        }
+
+        images.forEach((image) => {
+          const imageCard = document.createElement("div");
+          imageCard.className = "image-card";
+
+          // Special styling for query image
+          if (image.isQueryImage) {
+            imageCard.style.border = "3px solid #007bff";
+            imageCard.style.boxShadow = "0 4px 8px rgba(0,123,255,0.3)";
+          }
+
+          const scoreText =
+            image.score !== undefined
+              ? `<div class="image-score">Score: ${image.score.toFixed(
+                  3
+                )}</div>`
+              : "";
+
+          const queryLabel = image.isQueryImage
+            ? `<div style="background: #007bff; color: white; padding: 4px 8px; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 4px;">QUERY IMAGE</div>`
+            : "";
+
+          const imageSrc = `/api/image/${encodeURIComponent(image.filename)}`;
+
+          const favoriteIcon = isFavorite(image.filename) ? "★" : "☆";
+          const favoriteClass = isFavorite(image.filename) ? "favorited" : "";
+
+          imageCard.innerHTML = `
+                    ${queryLabel}
+                    <img src="${imageSrc}" alt="${image.filename}" loading="lazy" onclick="openModal('${imageSrc}', '${image.filename}')">
+                    <div class="image-info">
+                        <div class="image-header">
+                            <div class="image-name">${image.filename}</div>
+                            <button class="favorite-btn ${favoriteClass}" data-filename="${image.filename}" onclick="toggleFavorite('${image.filename}')">${favoriteIcon}</button>
+                        </div>
+                        ${scoreText}
+                        <div class="image-buttons">
+                            <button class="view-full-btn" onclick="openModal('${imageSrc}', '${image.filename}')">View Full Image</button>
+                            <button class="view-similar-btn" onclick="searchSimilarImages('${image.filename}')">View Similar Images</button>
+                        </div>
+                    </div>
+                `;
+
+          imagesGrid.appendChild(imageCard);
+        });
+      }
+
+      async function searchImages(query) {
+        showLoading();
+
+        try {
+          const response = await fetch("/api/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query: query }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          displayImages(data.images || []);
+        } catch (error) {
+          hideLoading();
+          showError(`Search failed: ${error.message}`);
+        }
+      }
+
+      async function loadAllImages() {
+        showLoading();
+
+        try {
+          const response = await fetch("/api/images");
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          allImages = data.images || [];
+          displayImages(allImages);
+        } catch (error) {
+          hideLoading();
+          showError(`Failed to load images: ${error.message}`);
+        }
+      }
+
+      searchBtn.addEventListener("click", () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          searchImages(query);
+        }
+      });
+
+      showAllBtn.addEventListener("click", () => {
+        loadAllImages();
+      });
+
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          const query = searchInput.value.trim();
+          if (query) {
+            searchImages(query);
+          }
+        }
+      });
+
+      // Modal event listeners
+      closeModal.addEventListener("click", closeModalFunc);
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          closeModalFunc();
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeModalFunc();
+        }
+      });
+
+      // Load all images on page load
+      loadAllImages();
+    </script>
+  </body>
+</html>
